@@ -1,8 +1,8 @@
-module StreamTests exposing (suite)
+module TypedTests exposing (suite)
 
 import Array
 import Expect exposing (Expectation, equal)
-import Stream exposing (Stream)
+import Stream.Typed as Stream exposing (Finite, Stream)
 import Test exposing (..)
 
 
@@ -16,19 +16,19 @@ expectNot val =
     val |> equal False
 
 
-makeLazy : Stream a -> Stream a
+makeLazy : Stream length a -> Stream length a
 makeLazy s =
     Stream.lazy (\() -> s)
 
 
 streams :
-    { empty : Stream a
-    , singleton : Stream String
-    , abc : Stream String
-    , xyz : Stream String
-    , naturalsRange : Stream Int
-    , binary : Stream Int
-    , constant : Stream String
+    { empty : Stream finite a
+    , singleton : Stream finite String
+    , abc : Stream finite String
+    , xyz : Stream finite String
+    , naturalsRange : Stream finite Int
+    , binary : Stream finite Int
+    , constant : Stream finite String
     }
 streams =
     { empty =
@@ -50,17 +50,17 @@ streams =
 {-| note that if you find yourself sorting a stream, you probably aren't solving your problem in the best way
 here we use it as a quick & dirty hack for testing purposes
 -}
-sort : Stream comparable -> Stream comparable
+sort : Stream Finite comparable -> Stream Finite comparable
 sort s =
-    s |> Stream.toList |> Stream.force |> List.sort |> Stream.fromList
+    s |> Stream.toList |> List.sort |> Stream.fromList
 
 
-toMaybes : Stream a -> Stream (Maybe a)
+toMaybes : Stream length a -> Stream length (Maybe a)
 toMaybes s =
     Stream.append (Stream.map Just s) (Stream.constant Nothing)
 
 
-expectStreamsEqual : Stream a -> Stream a -> Expectation
+expectStreamsEqual : Stream length a -> Stream length a -> Expectation
 expectStreamsEqual s1 s2 =
     let
         firstDifference =
@@ -100,11 +100,10 @@ creationTests =
                         |> Expect.equal Nothing
             , test "has length 0" <|
                 \_ ->
-                    Stream.length streams.empty |> Stream.force |> Expect.equal 0
+                    Stream.length streams.empty |> Expect.equal 0
             , test "has no last" <|
                 \_ ->
                     Stream.last streams.empty
-                        |> Stream.force
                         |> Expect.equal Nothing
             , test "maps" <|
                 \_ ->
@@ -123,11 +122,10 @@ creationTests =
                         |> Expect.equal (Just "s")
             , test "has length 1" <|
                 \_ ->
-                    Stream.length streams.singleton |> Stream.force |> Expect.equal 1
+                    Stream.length streams.singleton |> Expect.equal 1
             , test "has last" <|
                 \_ ->
                     Stream.last streams.singleton
-                        |> Stream.force
                         |> Expect.equal (Just "s")
             ]
 
@@ -188,7 +186,6 @@ creationTests =
                 \_ ->
                     streams.naturalsRange
                         |> Stream.member 1000
-                        |> Stream.force
                         |> Expect.equal True
             ]
 
@@ -269,19 +266,16 @@ combineTests =
                 \_ ->
                     Stream.product streams.empty streams.singleton
                         |> Stream.toList
-                        |> Stream.force
                         |> Expect.equal []
             , test "works on singleton and empty streams" <|
                 \_ ->
                     Stream.product streams.singleton streams.empty
                         |> Stream.toList
-                        |> Stream.force
                         |> Expect.equal []
             , test "works on finite streams " <|
                 \_ ->
                     Stream.product streams.abc streams.xyz
                         |> Stream.toList
-                        |> Stream.force
                         |> List.sort
                         |> Expect.equal
                             [ ( "a", "x" )
@@ -314,7 +308,6 @@ combineTests =
                             (\t -> List.member t expectedItems)
                         |> Stream.takeN 9
                         |> Stream.toList
-                        |> Stream.force
                         |> List.sort
                         |> Expect.equal expectedItems
             , test "works on infinite and finite streams" <|
@@ -337,7 +330,6 @@ combineTests =
                             (\t -> List.member t expectedItems)
                         |> Stream.takeN 9
                         |> Stream.toList
-                        |> Stream.force
                         |> List.sort
                         |> Expect.equal expectedItems
             ]
@@ -499,7 +491,6 @@ transformTests =
                             )
                         |> Stream.flatten
                         |> Stream.member ( 101, 102 )
-                        |> Stream.force
                         |> Expect.equal True
             ]
         , -- loop
@@ -531,56 +522,46 @@ queriesTests =
             [ test "of empty stream" <|
                 \_ ->
                     Stream.length streams.empty
-                        |> Stream.force
                         |> Expect.equal 0
             , test "of abc" <|
                 \_ ->
                     Stream.length streams.abc
-                        |> Stream.force
                         |> Expect.equal 3
             , test "of lazy abc" <|
                 \_ ->
                     Stream.length (makeLazy streams.abc)
-                        |> Stream.force
                         |> Expect.equal 3
             ]
         , describe "equals" <|
             [ test "empty streams are equal" <|
                 \_ ->
                     Stream.equals streams.empty streams.empty
-                        |> Stream.force
                         |> Expect.equal True
             , test "empty and singleton streams are not equal" <|
                 \_ ->
                     Stream.equals streams.empty streams.singleton
-                        |> Stream.force
                         |> Expect.equal False
             , test "abc and abc are equal" <|
                 \_ ->
                     Stream.equals streams.abc streams.abc
-                        |> Stream.force
                         |> Expect.equal True
             , test "abc and lazy abc are equal" <|
                 \_ ->
                     Stream.equals streams.abc (makeLazy streams.abc)
-                        |> Stream.force
                         |> Expect.equal True
             ]
         , describe "member"
             [ test "abc contains b" <|
                 \_ ->
                     Stream.member "b" streams.abc
-                        |> Stream.force
                         |> Expect.equal True
             , test "abc does not contain x" <|
                 \_ ->
                     Stream.member "x" streams.abc
-                        |> Stream.force
                         |> Expect.equal False
             , test "naturals contains 101" <|
                 \_ ->
                     Stream.member 101 streams.naturalsRange
-                        |> Stream.force
                         |> Expect.equal True
             ]
         ]
@@ -617,17 +598,14 @@ deconstructTests =
             [ test "of empty stream" <|
                 \_ ->
                     Stream.last streams.empty
-                        |> Stream.force
                         |> Expect.equal Nothing
             , test "of abc" <|
                 \_ ->
                     Stream.last streams.abc
-                        |> Stream.force
                         |> Expect.equal (Just "c")
             , test "of lazy abc" <|
                 \_ ->
                     Stream.last (makeLazy streams.abc)
-                        |> Stream.force
                         |> Expect.equal (Just "c")
             ]
         , -- toList
@@ -635,12 +613,10 @@ deconstructTests =
             [ test "of empty stream" <|
                 \_ ->
                     Stream.toList streams.empty
-                        |> Stream.force
                         |> Expect.equal []
             , test "of abc" <|
                 \_ ->
                     Stream.toList streams.abc
-                        |> Stream.force
                         |> Expect.equal [ "a", "b", "c" ]
             ]
         ]
@@ -648,7 +624,7 @@ deconstructTests =
 
 suite : Test
 suite =
-    describe "Stream"
+    describe "Stream - Typed"
         [ creationTests
         , createFromDataStructures
         , combineTests
