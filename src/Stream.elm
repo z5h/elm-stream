@@ -259,7 +259,7 @@ isFinite (Stream l s) =
 
         Indefinite ->
             -- `length` is a bogus function to force the stream
-            Unsafe (\_ -> Raw.length s >= 0)
+            Unsafe (\_ -> Raw.length s |> always True)
 
 
 isInfinite : Stream a -> Outcome Bool
@@ -273,7 +273,7 @@ isInfinite (Stream l s) =
 
         Indefinite ->
             -- `length` is a bogus function to force the stream
-            Unsafe (\_ -> Raw.length s < 0)
+            Unsafe (\_ -> Raw.length s |> always False)
 
 
 toList : Stream a -> Outcome (List a)
