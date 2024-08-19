@@ -213,11 +213,21 @@ isEmpty (Stream _ f) =
 
 equals : Stream a -> Stream a -> Outcome Bool
 equals (Stream ll l) (Stream rl r) =
-    if ll == Finite && rl == Finite then
-        Known (Raw.equals l r)
+    case ( ll, rl ) of
+        ( Finite, Infinite ) ->
+            Known False
 
-    else
-        Unsafe (\_ -> Raw.equals l r)
+        ( Infinite, Finite ) ->
+            Known False
+
+        ( Finite, _ ) ->
+            Known (Raw.equals l r)
+
+        ( _, Finite ) ->
+            Known (Raw.equals l r)
+
+        _ ->
+            Unsafe (\_ -> Raw.equals l r)
 
 
 member : a -> Stream a -> Outcome Bool
