@@ -213,11 +213,21 @@ isEmpty (Stream _ f) =
 
 equals : Stream a -> Stream a -> Outcome Bool
 equals (Stream ll l) (Stream rl r) =
-    if ll == Finite && rl == Finite then
-        Known (Raw.equals l r)
+    case ( ll, rl ) of
+        ( Finite, Infinite ) ->
+            Known False
 
-    else
-        Unsafe (\_ -> Raw.equals l r)
+        ( Infinite, Finite ) ->
+            Known False
+
+        ( Finite, _ ) ->
+            Known (Raw.equals l r)
+
+        ( _, Finite ) ->
+            Known (Raw.equals l r)
+
+        _ ->
+            Unsafe (\_ -> Raw.equals l r)
 
 
 member : a -> Stream a -> Outcome Bool
@@ -249,7 +259,7 @@ isFinite (Stream l s) =
 
         Indefinite ->
             -- `length` is a bogus function to force the stream
-            Unsafe (\_ -> Raw.length s >= 0)
+            Unsafe (\_ -> Raw.length s |> always True)
 
 
 isInfinite : Stream a -> Outcome Bool
@@ -263,7 +273,7 @@ isInfinite (Stream l s) =
 
         Indefinite ->
             -- `length` is a bogus function to force the stream
-            Unsafe (\_ -> Raw.length s < 0)
+            Unsafe (\_ -> Raw.length s |> always False)
 
 
 toList : Stream a -> Outcome (List a)
