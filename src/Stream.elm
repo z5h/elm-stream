@@ -1,4 +1,4 @@
-module Stream exposing (Outcome(..), Stream, append, apply, concatMap, constant, dropN, dropWhile, empty, equals, filter, filterMap, flatten, fold, force, fromArray, fromArrayAt, fromGenerator, fromList, head, isEmpty, isFinite, isInfinite, keepIf, last, lazy, length, loop, map, member, product, range, rangeFrom, singleton, takeN, takeWhile, toList, zip)
+module Stream exposing (Outcome(..), Stream, append, apply, concatMap, constant, dropN, dropWhile, empty, equals, filter, filterMap, flatten, fold, force, fromArray, fromArrayAt, fromGenerator, fromList, head, isEmpty, isFinite, isInfinite, keepIf, last, lazy, length, loop, map, member, product, range, rangeFrom, singleton, takeN, takeWhile, toList, toRaw, zip)
 
 import Array exposing (Array)
 import Stream.Internal as Internal
